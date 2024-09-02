@@ -12,9 +12,15 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private float moveSpeed;
     [SerializeField] private GameObject bullet;
+    [SerializeField] private GameObject explosionEffect;
     [SerializeField] private Transform bulletSpawnPosition;
 
+    [SerializeField] private float shootDelay;
+
+    [SerializeField] AudioSource shootSound;
+
     private bool isMoving;
+    private bool isShooting;
     private float moveDirection;
 
     private InputAction Move;
@@ -35,9 +41,14 @@ public class PlayerController : MonoBehaviour
         Move.started += Move_started;
         Move.canceled += Move_canceled;
         Shoot.started += Shoot_started;
+        Shoot.canceled += Shoot_canceled;
         Restart.started += Restart_started;
         Quit.started += Quit_started;
+
+        StartCoroutine(ShootBullet());
     }
+
+
 
     private void Quit_started(InputAction.CallbackContext obj)
     {
@@ -51,8 +62,12 @@ public class PlayerController : MonoBehaviour
 
     private void Shoot_started(InputAction.CallbackContext obj)
     {
-        //play explosion animated
-        Instantiate(bullet, bulletSpawnPosition.transform.position, Quaternion.identity);
+        isShooting = true;
+    }
+
+    private void Shoot_canceled(InputAction.CallbackContext obj)
+    {
+        isShooting = false;
     }
 
     private void Move_canceled(InputAction.CallbackContext obj)
@@ -81,17 +96,49 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        rb2d.velocity = new Vector2(0, moveDirection * moveSpeed);
+        if (isMoving)
+        {
+            rb2d.velocity = new Vector2(0, moveDirection * moveSpeed);
+        }
+        else
+        {
+            rb2d.velocity = Vector2.zero;
+        }
+        
     }
 
-    private void OnDestroy()
+    public void RemoveControl()
     {
         Move.started -= Move_started;
         Move.canceled -= Move_canceled;
         Shoot.started -= Shoot_started;
+        Shoot.canceled -= Shoot_canceled;
+        isMoving = false;
+        isShooting = false;
+    }
+
+    private void OnDestroy()
+    {
+        RemoveControl();
         Restart.started -= Restart_started;
         Quit.started -= Quit_started;
     }
 
+    IEnumerator ShootBullet()
+    {
+        while (true)
+        {
+            if (isShooting)
+            {
+                shootSound.Play();
+                Instantiate(explosionEffect, bulletSpawnPosition.transform.position, Quaternion.identity);
+                Instantiate(bullet, bulletSpawnPosition.transform.position, Quaternion.identity);
 
+                yield return new WaitForSeconds(shootDelay);
+            }
+
+            yield return null; 
+        }
+    }
 }
+

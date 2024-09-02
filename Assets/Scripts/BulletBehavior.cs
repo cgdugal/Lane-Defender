@@ -6,6 +6,8 @@ public class BulletBehavior : MonoBehaviour
 {
     [SerializeField] private Rigidbody2D rb2d;
     [SerializeField] private float speed;
+    [SerializeField] private GameObject explosionEffect;
+    [SerializeField] private AudioSource hitSound;
     
     // Start is called before the first frame update
     void Start()
@@ -23,9 +25,10 @@ public class BulletBehavior : MonoBehaviour
     {
         if(collision.transform.tag == "Enemy")
         {
+            hitSound.Play();
             collision.gameObject.GetComponent<EnemyBehavior>().TakeDamage();
         }
-        //play explosion animation
+        Instantiate(explosionEffect, this.transform.position, Quaternion.identity);
         Destroy(this.gameObject);
 
     }
